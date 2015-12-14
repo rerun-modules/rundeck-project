@@ -15,7 +15,7 @@ Use environment variables to default URL and credentials
 
 List existng projects
 
-	$ rerun  rundeck-project:list
+	$ rerun rundeck-project:list
 	guitars-demo
 	anvils-demo
 
@@ -38,7 +38,7 @@ Add a new ACL policy to the project:
 
 	$ rerun  rundeck-project:acls-create --project foo --file anyone-allow-resource.aclpolicy
 
-Run the listing again. The anyone-allow-resource.aclpolicy policy is shown.
+Run the listing again. The 'anyone-allow-resource.aclpolicy' policy is shown.
 
 	$ rerun  rundeck-project:acls-list --project foo
 	anyone-allow-resource.aclpolicy
@@ -59,7 +59,7 @@ Delete an ACL Policy
 
 ## Templates
 
-With *rundeck-project:provision", you can provision projects using templates. Templates are organized in a structure shown below:
+With *rundeck-project:provision*, you can provision projects using templates. Templates are organized in a structure shown below:
 
 * project.xml: (obtain one via `rundeck-project:config --project <>  --format xml`)
 * acl/: Contains abitrary .aclpolicy files
@@ -91,7 +91,9 @@ Example templates directory
 
 Provision a new project using the templates
 
-	rerun rundeck-project:provision --project foo --templates templates/example --rdeck-base $RDECK_BASE
+	rerun rundeck-project:provision --project foo --templates templates/example \
+		--rdeck-base $RDECK_BASE \
+		--git-repo-url git@gitserver.com:ahonor/foo-jobs.git
 	Creating project: foo ...
 	[OK] Created.
 	Loading aclpolicy files ...
@@ -108,7 +110,8 @@ Provision a new project using the templates
 	 - templates/example/acl/releng-jobs-allow-release_Promote.aclpolicy
 	[OK] Loaded 11 aclpolicy files.
 	Configuring SCM plugins ...	
-	 - git-export.xml
-	 - git-import.xml
+	 - git-export
+	 - git-import
 	 [OK] SCM plugins configured.
 	Complete.
+

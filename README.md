@@ -89,3 +89,26 @@ Example templates directory
 
 	2 directories, 14 files
 
+Provision a new project using the templates
+
+	rerun rundeck-project:provision --project foo --templates templates/example --rdeck-base $RDECK_BASE
+	Creating project: foo ...
+	[OK] Created.
+	Loading aclpolicy files ...
+	 - templates/example/acl/anyone-allow-resource.aclpolicy
+	 - templates/example/acl/anyone-node-allow.aclpolicy
+	 - templates/example/acl/anyone-resource-allow.aclpolicy
+	 - templates/example/acl/dev-jobs-allow-web_Restart.aclpolicy
+	 - templates/example/acl/dev-jobs-allow-web_Status.aclpolicy
+	 - templates/example/acl/dev-node-allow-www.aclpolicy
+	 - templates/example/acl/ops-jobs-allow-anvils.aclpolicy
+	 - templates/example/acl/ops-jobs-allow-db.aclpolicy
+	 - templates/example/acl/ops-jobs-deny-releng_Promote.aclpolicy
+	 - templates/example/acl/ops-node-allow-all.aclpolicy
+	 - templates/example/acl/releng-jobs-allow-release_Promote.aclpolicy
+	[OK] Loaded 11 aclpolicy files.
+	Configuring SCM plugins ...	
+	 - git-export.xml
+	 - git-import.xml
+	 [OK] SCM plugins configured.
+	Complete.

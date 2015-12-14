@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:delete: "delete a project."
-#/ usage: rerun rundeck-project:delete  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD>  --yes-really|-y 
+#/ usage: rerun rundeck-project:delete  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --yes-really|-y 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: PROJECT URL USERNAME PASSWORD YES_REALLY
+#/ option-variables: PROJECT URL USERNAME PASSWORD APIKEY YES_REALLY
 
 
 . $RERUN_MODULE_DIR/lib/functions.sh delete || { 
@@ -30,7 +30,18 @@ fi
 CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
 trap 'rm $CURL_OUT' EXIT
 
-rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+#
+# Read authentication credentials
+#
+if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
+then
+	COOKIES=$(rundeck_login "$URL" "$USERNAME" "$PASSWORD")
+	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
+elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
+	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
+else
+	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+fi
 
 if ! http_code=$(rundeck_curl -w "%{http_code}" \
 	-X DELETE ${URL}/api/11/project/$PROJECT -o $CURL_OUT)
@@ -41,6 +52,7 @@ fi
 case ${http_code:-} in
    	204) : ;; # successful removal
    	404) : ;; # project did not exist.
+	403) rerun_die "Not authorized for action 'delete' for Project $PROJECT" ;;
 	* ) rerun_die 3 "API error (http_code=${http_code}): DELETE ${URL}/api/11/project/$PROJECT" ;;
 esac    
 

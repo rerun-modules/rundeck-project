@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-#/ command: rundeck-project:acls-update: "update an aclpolicy"
-#/ usage: rerun rundeck-project:acls-update [ --file <>] [ --aclpolicy <>]  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> 
+#/ command: rundeck-project:acls-update: "update existing aclpolicy with new content"
+#/ usage: rerun rundeck-project:acls-update [ --file <>] [ --aclpolicy <>]  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: FILE ACLPOLICY PROJECT URL USERNAME PASSWORD
+#/ option-variables: FILE ACLPOLICY PROJECT URL USERNAME PASSWORD APIKEY
 
 
 . $RERUN_MODULE_DIR/lib/functions.sh acls-update || { 
@@ -15,7 +15,18 @@ set -o errexit -o nounset -o pipefail
 
 rerun_options_parse "$@"
 
-rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+#
+# Read authentication credentials
+#
+if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
+then
+	COOKIES=$(rundeck_login "$URL" "$USERNAME" "$PASSWORD")
+	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
+elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
+	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
+else
+	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+fi
 
 [[ ! -n "${FILE:-}" ]] && rerun_die 2 "Requires --file <> option"
 [[ ! -f $FILE ]] && rerun_die 2 "File not found: $FILE"

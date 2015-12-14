@@ -24,11 +24,9 @@ fi
 # Your functions declared here.
 # - - -
 
-# Where to store the login cookies
-COOKIES=$(mktemp "/tmp/cookies.XXXXX")
-# Curl opts to accept insecure certs, use a cookie jar, follow redirects, show only errors
-CURLOPTS="-k -s -S -L -c $COOKIES -b $COOKIES"
 
+# Curl opts to accept insecure certs, follow redirects, show only errors
+CURLOPTS="-k -s -S -L"
 
 #
 # _rundeck_curl_ - The curl wrapper function
@@ -66,20 +64,23 @@ rundeck_login(){
 	}
 	local -r url=$1 user=$2 password=$3
 
+	# Where to store the login cookies
+	local COOKIES=$(mktemp -t "cookies.XXXXX")
+
 	local http_code errors
 	local -r loginurl="${url}/j_security_check"
 
 	# Request the login form.
-	if ! http_code=$(rundeck_curl --fail -w "%{http_code}" $url 2>/dev/null >/dev/null)
+	if ! http_code=$(rundeck_curl -c $COOKIES -b $COOKIES --fail -w "%{http_code}" $url 2>/dev/null >/dev/null)
 	then
 		rerun_die 3 "curl request failed to $url (exit code: $?)"
     fi
 
     # Temporary file to store results.
-    local -r curl_out=$(mktemp "/tmp/login.XXXXX")
+    local -r curl_out=$(mktemp -t "login.XXXXX")
 
     # Submit the username and password to the login form.
-	if ! http_code=$(rundeck_curl -w "%{http_code}"  -d j_username=$user -d j_password=$password \
+	if ! http_code=$(rundeck_curl  -c $COOKIES -b $COOKIES -w "%{http_code}"  -d j_username=$user -d j_password=$password \
 		-X POST $loginurl 2>/dev/null -o $curl_out)
 	then
 		rerun_die 3 "curl request failed to $loginurl (exit code: $?)"
@@ -104,6 +105,7 @@ rundeck_login(){
 		rerun_die 3 "Login failure. error: $errors"
 	}
 
+	echo $COOKIES
 	return 0
 }
 

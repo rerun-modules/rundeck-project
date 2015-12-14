@@ -3,4 +3,4 @@
 # Fri Dec 11 11:32:38 PST 2015
 NAME=acls-delete
 DESCRIPTION="delete an aclpolicy"
-OPTIONS="aclpolicy project url username password"
+OPTIONS="aclpolicy project url username password apikey"

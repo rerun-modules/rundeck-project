@@ -3,4 +3,4 @@
 # Thu Dec 10 16:12:05 PST 2015
 NAME=list
 DESCRIPTION="list existing projects"
-OPTIONS="url username password"
+OPTIONS="url username password apikey"

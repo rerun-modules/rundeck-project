@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #/ command: rundeck-project:config: "Update project configuration"
-#/ usage: rerun rundeck-project:config  --project <> [ --file <>] [ --format <xml>]  --action <get>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> 
+#/ usage: rerun rundeck-project:config  --project <> [ --file <>] [ --format <xml>]  --action <get>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: PROJECT FILE FORMAT ACTION URL USERNAME PASSWORD
+#/ option-variables: PROJECT FILE FORMAT ACTION URL USERNAME PASSWORD APIKEY
 
 set -o errexit -o nounset -o pipefail
 
@@ -57,7 +57,18 @@ get_action() {
 	cat "$CURL_OUT"
 }
 
-rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+#
+# Read authentication credentials
+#
+if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
+then
+	COOKIES=$(rundeck_login "$URL" "$USERNAME" "$PASSWORD")
+	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
+elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
+	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
+else
+	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+fi
 
 case $ACTION in
 	get) get_action

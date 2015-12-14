@@ -3,4 +3,4 @@
 # Mon May 20 11:16:53 PDT 2013
 NAME=config
 DESCRIPTION="Update project configuration"
-OPTIONS="project file format action url username password"
+OPTIONS="project file format action url username password apikey"

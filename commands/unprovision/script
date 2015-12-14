@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:unprovision: "archive and delete the project"
-#/ usage: rerun rundeck-project:unprovision  --project <> [ --file <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> 
+#/ usage: rerun rundeck-project:unprovision  --project <> [ --file <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: PROJECT FILE URL USERNAME PASSWORD
+#/ option-variables: PROJECT FILE URL USERNAME PASSWORD APIKEY
 
 
 . $RERUN_MODULE_DIR/lib/functions.sh unprovision || { 
@@ -17,7 +17,19 @@ rerun_options_parse "$@"
 
 [[ -z "${FILE:-}" ]] && rerun_die 2 "Specify archive file via --file <>"
 
-OPTS=(--url $URL --username $USERNAME --password $PASSWORD --project $PROJECT)
+OPTS=(--url $URL --username $USERNAME --project $PROJECT)
+
+#
+# Read authentication credentials
+#
+if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
+then
+	OPTS=(${OPTS[*]} --password $PASSWORD)
+elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
+	OPTS=(${OPTS[*]} --apikey $APIKEY)
+else
+	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+fi
 
 rerun_log info "Archiving project to file ..."
 rerun rundeck-project:export ${OPTS[*]} --file $FILE

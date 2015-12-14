@@ -2,7 +2,7 @@
 
 
 #/ command: rundeck-project:create: "create a new project"
-#/ usage: rerun rundeck-project:create  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD>  --project <>  --templates <> 
+#/ usage: rerun rundeck-project:create  --project <>  --templates <> [ --description <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 
 # Load common functions
 # ---------------------
@@ -18,16 +18,24 @@ set -o errexit -o nounset -o pipefail
 # Command variables
 # -----------------
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: URL USERNAME PASSWORD PROJECT TEMPLATES
+#/ option-variables: PROJECT TEMPLATES DESCRIPTION URL USERNAME PASSWORD APIKEY
 
 # Parse options
 # -------------
 rerun_options_parse "$@"
 
-# Authenticate
-# ------------
-rundeck_login "$URL" "$USERNAME" "$PASSWORD"
 
+# Read authentication credentials
+#
+if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
+then
+	COOKIES=$(rundeck_login "$URL" "$USERNAME" "$PASSWORD")
+	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
+elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
+	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
+else
+	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+fi
 # Process the template
 # -------------------
 [[ ! -d $TEMPLATES ]] && rerun_die 2 "Template directory not found: $TEMPLATES"

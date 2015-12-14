@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:provision: "provision a project"
-#/ usage: rerun rundeck-project:provision  --project <>  --templates <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD>  --rdeck-base <$RDECK_BASE>  --git-repo-url <> 
+#/ usage: rerun rundeck-project:provision  --project <>  --templates <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --rdeck-base <$RDECK_BASE>  --git-repo-url <> 
 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: PROJECT TEMPLATES URL USERNAME PASSWORD RDECK_BASE GIT_REPO_URL
+#/ option-variables: PROJECT TEMPLATES URL USERNAME PASSWORD APIKEY RDECK_BASE GIT_REPO_URL
 
 
 # Load the function library for this module.
@@ -22,8 +22,21 @@ rerun_options_parse "$@"
 TMPFILES=()
 #trap 'rm ${TMPFILES[*]}' EXIT; # cleanup on exit
 
+OPTS=(--url $URL --username $USERNAME --project $PROJECT)
 
-OPTS=(--url $URL --username $USERNAME --password $PASSWORD --project $PROJECT)
+
+#
+# Read authentication credentials
+#
+if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
+then
+	OPTS=(${OPTS[*]} --password $PASSWORD)
+elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
+	OPTS=(${OPTS[*]} --apikey $APIKEY)
+else
+	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+fi
+
 
 rerun_log "Creating project: $PROJECT ..."
 rerun rundeck-project:create ${OPTS[*]} --templates $TEMPLATES
@@ -43,6 +56,8 @@ rerun_log "Configuring SCM plugins ..."
 
 for integration in import export
 do
+	[[ ! -f $TEMPLATES/scm/git-$integration.xml ]] && continue
+
 	SCM_CONFIG=$(mktemp -t "git-$integration.XXXXX"); TMPFILES=(${TMPFILES[*]:-} $SCM_CONFIG)
 	sed \
 		-e "s/@SCM_INTEGRATION@/$integration/g" \

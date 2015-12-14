@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-#/ command: rundeck-project:list: "list the existing projects"
-#/ usage: rerun rundeck-project:list  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> 
+#/ command: rundeck-project:list: "list existing projects"
+#/ usage: rerun rundeck-project:list  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: URL USERNAME PASSWORD
+#/ option-variables: URL USERNAME PASSWORD APIKEY
 
 
 . $RERUN_MODULE_DIR/lib/functions.sh list || { 
@@ -16,8 +16,18 @@ set -o errexit -o nounset -o pipefail
 
 rerun_options_parse "$@"
 
-
-rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+#
+# Read authentication credentials
+#
+if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
+then
+	COOKIES=$(rundeck_login "$URL" "$USERNAME" "$PASSWORD")
+	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
+elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
+	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
+else
+	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+fi
 
 CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
 trap 'rm $CURL_OUT' EXIT; # cleanup on exit

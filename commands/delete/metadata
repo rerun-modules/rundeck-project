@@ -3,4 +3,4 @@
 # Mon May 20 11:16:53 PDT 2013
 NAME=delete
 DESCRIPTION="delete a project."
-OPTIONS="project url username password yes-really"
+OPTIONS="project url username password apikey yes-really"

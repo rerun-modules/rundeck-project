@@ -3,4 +3,4 @@
 # Thu Dec 10 16:14:55 PST 2015
 NAME=create
 DESCRIPTION="create a new project"
-OPTIONS="project templates description url username password"
+OPTIONS="project templates description url username password apikey"

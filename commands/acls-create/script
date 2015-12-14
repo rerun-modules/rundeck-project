@@ -18,15 +18,8 @@ rerun_options_parse "$@"
 #
 # Read authentication credentials
 #
-if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
-then
-	COOKIES=$(rundeck_login "$URL" "$USERNAME" "$PASSWORD")
-	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
-elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
-	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
-else
-	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
-fi
+rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}"
+
 
 [[ ! -n "${FILE:-}" ]] && rerun_die 2 "Requires --file <> option"
 [[ ! -f $FILE ]] && rerun_die 2 "File not found: $FILE"

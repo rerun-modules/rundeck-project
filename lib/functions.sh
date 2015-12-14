@@ -109,4 +109,25 @@ rundeck_login(){
 	return 0
 }
 
+rundeck_authenticate() {
+	OPTIND=1
+	local url username password apikey cookies
+	while getopts "u:U:p:k:" opt; do
+		case "$opt" in
+			u) url=$OPTARG ;;
+			U) username=$OPTARG ;;
+			p) password=$OPTARG ;;
+			k) apikey=$OPTARG ;;
+		esac
+	done
 
+	if [[ -n "${password:-}" && -z "${apikey:-}" ]]
+	then
+		COOKIES=$(rundeck_login "$URL" "$username" "$password")
+		CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
+	elif [[ -z "${password:-}" && -n "${apikey:-}" ]]; then
+		CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$apikey"
+	else
+		rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+	fi
+}

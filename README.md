@@ -56,3 +56,27 @@ Get the ACL policy file
 Delete an ACL Policy
 
 	$ rerun  rundeck-project:acls-delete --project foo --aclpolicy anyone-allow-resource.aclpolicy
+
+## Templates
+
+Example template
+
+	templates/example
+	├── acl
+	│   ├── anyone-allow-resource.aclpolicy
+	│   ├── anyone-node-allow.aclpolicy
+	│   ├── anyone-resource-allow.aclpolicy
+	│   ├── dev-jobs-allow-web_Restart.aclpolicy
+	│   ├── dev-jobs-allow-web_Status.aclpolicy
+	│   ├── dev-node-allow-www.aclpolicy
+	│   ├── ops-jobs-allow-anvils.aclpolicy
+	│   ├── ops-jobs-allow-db.aclpolicy
+	│   ├── ops-jobs-deny-releng_Promote.aclpolicy
+	│   ├── ops-node-allow-all.aclpolicy
+	│   └── releng-jobs-allow-release_Promote.aclpolicy
+	├── project.xml
+	└── scm
+	    ├── git-export.xml
+	    └── git-import.xml
+
+	2 directories, 14 files

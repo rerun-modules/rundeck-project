@@ -6,7 +6,10 @@ Use *rundeck-project* to administrate Rundeck project life cycle.
 
 Most of the rundeck-project commands use the same options to connect to the rundeck server and specify the project to administrate. Several of these can be defaulted to environment variable values.
 
-	--project <> --<$RUNDECK_URL> --user <$RUNDECK_USER> --password <$RUNDECK_PASSWORD>
+	--project <> --<$RUNDECK_URL> --user <$RUNDECK_USER> --password <$RUNDECK_PASSWORD> --apikey <$APIKEY>
+
+
+> Note, --apikey <> and --password <> are mutually exclusive.
 
 ## Examples
 Use environment variables to default URL and credentials

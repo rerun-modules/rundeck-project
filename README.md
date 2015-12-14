@@ -59,7 +59,15 @@ Delete an ACL Policy
 
 ## Templates
 
-Example template
+With *rundeck-project:provision", you can provision projects using templates. Templates are organized in a structure shown below:
+
+* project.xml: rundeck-project:config --project <>  --format xml
+* acl/
+* scm/git-{export,import}.xml
+
+
+
+Example templates directory
 
 	templates/example
 	├── acl
@@ -80,3 +88,4 @@ Example template
 	    └── git-import.xml
 
 	2 directories, 14 files
+

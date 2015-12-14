@@ -3,4 +3,4 @@
 # Fri Dec 11 14:46:14 PST 2015
 NAME=provision
 DESCRIPTION="provision a project"
-OPTIONS="project templates url username password rdeck-base"
+OPTIONS="project templates url username password rdeck-base git-repo-url"

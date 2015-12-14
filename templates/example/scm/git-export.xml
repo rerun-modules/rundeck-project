@@ -1,6 +1,6 @@
 <scmPluginConfig>
   <config>
-    <entry key="url">https://someuser@github.com/@someuser@/@PROJECT@.git </entry>
+    <entry key="url">@GIT_REPO_URL@</entry>
     <entry key="dir">@RDECK_BASE@/projects/@PROJECT@/scm</entry>
     <entry key="committerEmail">${user.email}</entry>
     <entry key="committerName">${user.fullName}</entry>

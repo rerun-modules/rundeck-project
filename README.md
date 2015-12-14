@@ -61,9 +61,9 @@ Delete an ACL Policy
 
 With *rundeck-project:provision", you can provision projects using templates. Templates are organized in a structure shown below:
 
-* project.xml: rundeck-project:config --project <>  --format xml
-* acl/
-* scm/git-{export,import}.xml
+* project.xml: (obtain one via `rundeck-project:config --project <>  --format xml`)
+* acl/: Contains abitrary .aclpolicy files
+* scm/git-{export,import}.xml: (obtain one via `rundeck-project:scm-setup --project <>  --scm-integration import/export`)
 
 
 

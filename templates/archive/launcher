@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# launcher - Launch a self extracting archive script
+#
+# generator: @GENERATOR@
+# date: @DATE@
+# user: @USER@
+# archive-version: @VERSION@
+# archive-release: @RELEASE@
+
+# Function to print error message and exit
+die() { echo "ERROR: $* " >&2 ; exit 1 ; }
+
+# Check for required environment variables 
+[ -z "${CWD}" ] && die "CWD not set." ; # user's current working directory
+[ -z "${PAYLOAD}" ] && die "PAYLOAD directory not specified." ; # archive artifacts 
+
+# Verify the extracted artifact contents
+[ -d ${PAYLOAD}/rerun ] || die "rerun subdirectory not found. CWD=${CWD}, PAYLOAD=$PAYLOAD"
+[ -d ${PAYLOAD}/rerun/modules ] || die "missing modules subdirectory"
+[ -f ${PAYLOAD}/rerun/rerun ] || die "missing rerun script"
+[ -x ${PAYLOAD}/rerun/rerun ] || { chmod +x ./rerun || die "couldn't set rerun executable" ; }
+
+# set the module directory base
+export RERUN_MODULES=$PAYLOAD/rerun/modules
+
+# add archive rerun script to path
+PATH=$PATH:$PAYLOAD/rerun
+
+# Check for rerun options. 
+rerun_opts=()
+case "$1" in	
+    --answers)
+		# Add the --answers option
+        rerun_opts=(--answers=$2)
+        shift; shift;
+        ;;
+esac
+
+# launch it!
+exec $PAYLOAD/rerun/rerun ${rerun_opts[*]:-} rundeck-project: "$@"
+
+# Done

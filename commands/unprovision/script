@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:unprovision: "archive and delete the project"
+#/ usage: rerun rundeck-project:unprovision  --project <> [ --file <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT FILE URL USERNAME PASSWORD
+
+
+. $RERUN_MODULE_DIR/lib/functions.sh unprovision || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+
+set -o errexit -o nounset -o pipefail
+
+rerun_options_parse "$@"
+
+[[ ! -f $FILE ]] && rerun_die 2 "Specify archive file via --file <>"
+
+OPTS=(--url $URL --username $USERNAME --password $PASSWORD --project $PROJECT)
+
+rerun_log info "Archiving project to file ..."
+rerun rundeck-project:export ${OPTS[*]} --file $FILE
+rerun_log info "[OK]"
+
+rerun_log info "Deleting project ..."
+rerun rundeck-project:delete ${OPTS[*]} --yes-really
+rerun_log info "[OK]"
+
+# Done. Exit with last command exit status.
+exit $?
+

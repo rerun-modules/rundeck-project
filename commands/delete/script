@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:delete: "delete a project."
+#/ usage: rerun rundeck-project:delete  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD>  --yes-really|-y 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT URL USERNAME PASSWORD YES_REALLY
+
+
+. $RERUN_MODULE_DIR/lib/functions.sh delete || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+set -o errexit -o nounset -o pipefail
+
+
+rerun_options_parse "$@"
+
+if [[ ${YES_REALLY:-} != "true" ]]
+then
+	echo "Really do it? (yes/no) "
+	read ANSWER
+	if [[ ${ANSWER} =~ (yes|ok) ]]
+	then
+		:; # user really wants to delete the project
+	else
+		exit 0
+	fi
+fi
+
+CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
+trap 'rm $CURL_OUT' EXIT
+
+rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+
+if ! http_code=$(rundeck_curl -w "%{http_code}" \
+	-X DELETE ${URL}/api/11/project/$PROJECT -o $CURL_OUT)
+then
+	rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+case ${http_code:-} in
+   	204) : ;; # successful removal
+   	404) : ;; # project did not exist.
+	* ) rerun_die 3 "API error (http_code=${http_code}): DELETE ${URL}/api/11/project/$PROJECT" ;;
+esac    
+
+
+
+# Done. Exit with last command exit status.
+exit $?
+

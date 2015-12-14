@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:export: "export the project to an archive"
+#/ usage: rerun rundeck-project:export  --project <> [ --file <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT FILE URL USERNAME PASSWORD
+
+. $RERUN_MODULE_DIR/lib/functions.sh export || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+
+set -o errexit -o nounset -o pipefail
+
+rerun_options_parse "$@"
+
+[[ -z "$FILE" ]] && {
+	FILE=${PROJECT}.zip
+	echo "Project exported to archive: $FILE"
+}
+
+rundeck_login $URL $USERNAME $PASSWORD
+
+CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
+trap 'rm $CURL_OUT' EXIT; # cleanup on exit
+
+if ! http_code=$(rundeck_curl -w "%{http_code}" \
+	-X GET ${URL}/api/14/project/$PROJECT/export -o $CURL_OUT)
+then
+	rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+case ${http_code:-} in
+   	20*) cp $CURL_OUT $FILE ;; # successful
+   	404) rerun_die "Export failed. Reason: $(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
+	* ) rerun_die 3 "API error (http_code: ${http_code:-}): GET ${URL}/api/11/project/$PROJECT/export" ;;
+esac
+
+# done
+exit $?

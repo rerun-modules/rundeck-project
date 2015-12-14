@@ -1,0 +1,29 @@
+<!--
+	Template for project.xml. Used to create and configure new projects.
+-->
+<project>
+  <name>@PROJECT@</name>
+  <description>@DESCRIPTION@</description>
+  <config>
+
+	  <property key='project.ssh-authentication' value='privateKey' />
+	  <!-- Default ssh keypath 
+	  <property key='project.ssh-keypath' value='/home/rundeck/.ssh/id_rsa' />-->
+
+  	  <!-- Default ssh key storage path -->
+	  <property key='project.ssh-key-storage-path' value='keys/@PROJECT/remoteuser/id_rsa' />
+
+	  <!-- Default NodeExecutor and FileCopier -->
+	  <property key='service.NodeExecutor.default.provider' value='jsch-ssh' />
+	  <property key='service.FileCopier.default.provider'   value='jsch-scp' />
+
+	  <!-- Second File Model Source in JSON format-->
+	  <property key='resources.source.2.type' value='file' />
+	  <property key='resources.source.2.config.file' value='@RDECK_BASE@/projects/@PROJECT@/project-nodes.json' />
+	  <property key='resources.source.2.config.format' value='resourcejson' />  
+	  <property key='resources.source.2.config.generateFileAutomatically' value='false' />
+	  <property key='resources.source.2.config.includeServerNode' value='false' />
+	  <property key='resources.source.2.config.requireFileExists' value='false' />
+
+	</config>
+</project>

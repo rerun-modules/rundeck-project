@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:acls-create: "create an aclpolicy"
+#/ usage: rerun rundeck-project:acls-create [ --aclpolicy <>]  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> [ --file <>] 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: ACLPOLICY PROJECT URL USERNAME PASSWORD FILE
+
+. $RERUN_MODULE_DIR/lib/functions.sh acls-create || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+set -o errexit -o nounset -o pipefail
+
+rerun_options_parse "$@"
+
+[[ ! -n $ACLPOLICY ]] && ACLPOLICY=$(basename $FILE)
+
+rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+
+[[ ! -n "${FILE:-}" ]] && rerun_die 2 "Requires --file <> option"
+[[ ! -f $FILE ]] && rerun_die 2 "File not found: $FILE"
+
+POST_CONTENT=$(mktemp -t post.content.XXXXXXXXXX)
+cat >$POST_CONTENT <<EOF
+<contents><![CDATA[$(< $FILE)]]></contents>
+EOF
+! xmlstarlet val -q $POST_CONTENT && rerun_die "Error encoding aclpolicy content"
+CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
+
+trap 'rm $POST_CONTENT $CURL_OUT' EXIT; # cleanup on exit
+
+if ! http_code=$(rundeck_curl -w "%{http_code}" --data-binary @$POST_CONTENT \
+	-H Content-Type:application/xml -H Accept:application/xml \
+	-X POST ${URL}/api/14/project/$PROJECT/acl/$ACLPOLICY -o $CURL_OUT)
+then
+		rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+case ${http_code:-} in
+   	20*) : ;; # successful 
+   	40*) rerun_die "The aclpolicy create failed. Reason: $(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
+	* )  rerun_die 3 "API error ${http_code:-}: POST ${URL}/api/14/project/$PROJECT/acl/$ACLPOLICY" ;;
+esac 
+
+
+# Done. Exit with last command exit status.
+exit $?
+

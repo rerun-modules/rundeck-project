@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+
+#/ command: rundeck-project:create: "create a new project"
+#/ usage: rerun rundeck-project:create  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD>  --project <>  --templates <> 
+
+# Load common functions
+# ---------------------
+
+. $RERUN_MODULE_DIR/lib/functions.sh create || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+# Fail fast
+# ---------
+set -o errexit -o nounset -o pipefail
+
+# Command variables
+# -----------------
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: URL USERNAME PASSWORD PROJECT TEMPLATES
+
+# Parse options
+# -------------
+rerun_options_parse "$@"
+
+# Authenticate
+# ------------
+rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+
+# Process the template
+# -------------------
+[[ ! -d $TEMPLATES ]] && rerun_die 2 "Template directory not found: $TEMPLATES"
+[[ ! -f $TEMPLATES/project.xml ]] && rerun_die 2 "Template not found."
+
+POST_CONTENT=$(mktemp -t post.content.XXXXXXXXXX)
+CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
+trap 'rm $POST_CONTENT $CURL_OUT' EXIT; # cleanup on exit
+
+sed \
+	-e "s/@PROJECT@/${PROJECT:-}/g" \
+	-e "s/@DESCRIPTION@/${DESCRIPTION:-}/g" \
+	-e "s,@RDECK_BASE@,${RDECK_BASE:-},g" \
+	$TEMPLATES/project.xml > $POST_CONTENT
+
+if ! http_code=$(rundeck_curl -w "%{http_code}" --data-binary @$POST_CONTENT \
+	-H Content-Type:application/xml -H Accept:application/xml \
+	-X POST ${URL}/api/11/projects -o $CURL_OUT)
+then
+	rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+case ${http_code:-} in
+   	20*) : ;; # successful 
+   	409) rerun_die "Create failed. Reason: $(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
+	* )  rerun_die 3 "API error '${http_code:-}': POST ${URL}/api/11/projects" ;;
+esac 
+
+
+# Done. Exit with last command exit status.
+exit $?
+

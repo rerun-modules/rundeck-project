@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:provision: "provision a project"
+#/ usage: rerun rundeck-project:provision  --project <>  --templates <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD>  --rdeck-base <$RDECK_BASE> 
+
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT TEMPLATES URL USERNAME PASSWORD RDECK_BASE
+
+
+# Load the function library for this module.
+# This loads rerun functions, too.
+. $RERUN_MODULE_DIR/lib/functions.sh provision || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+
+set -o errexit -o nounset -o pipefail
+
+
+rerun_options_parse "$@"
+
+TMPFILES=()
+#trap 'rm ${TMPFILES[*]}' EXIT; # cleanup on exit
+
+
+OPTS=(--url $URL --username $USERNAME --password $PASSWORD --project $PROJECT)
+
+rerun_log "Creating project: $PROJECT ..."
+rerun rundeck-project:create ${OPTS[*]} --templates $TEMPLATES
+rerun_log "[OK] Created."
+
+rerun_log "Loading aclpolicy files ..."
+policies=($TEMPLATES/acl/*.aclpolicy)
+for aclfile in ${policies[*]}
+do 
+	rerun rundeck-project:acls-create ${OPTS[*]} --aclpolicy $(basename $aclfile) --file $aclfile
+	rerun_log " - $aclfile"
+done
+rerun_log "[OK] Loaded ${#policies[*]} aclpolicy files."
+
+rerun_log "Configuring SCM plugins ..."
+set -vx
+for integration in import export
+do
+
+	SCM_CONFIG=$(mktemp -t "git-$integration.XXXXX"); TMPFILES=(${TMPFILES[*]:-} $SCM_CONFIG)
+	sed \
+		-e "s/@SCM_INTEGRATION@/$integration/g" \
+		-e "s/@PROJECT@/$PROJECT/g" \
+		-e "s,@RDECK_BASE@,$RDECK_BASE,g" \
+		$TEMPLATES/scm/git-$integration.xml > $SCM_CONFIG
+
+	rerun rundeck-project:scm-setup ${OPTS[*]} --scm-integration $integration --file $SCM_CONFIG --action post
+	rerun_log " - Setup git-$integration"
+done
+rerun_log "[OK] SCM plugins setup"
+
+# Done. Exit with last command exit status.
+exit $?
+

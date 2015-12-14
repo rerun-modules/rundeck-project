@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:scm-setup: "setup an scmp plugin for the project"
+#/ usage: rerun rundeck-project:scm-setup  --project <> [ --file <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD>  --scm-integration <>  --action <get> 
+
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT FILE URL USERNAME PASSWORD SCM_INTEGRATION ACTION
+
+. $RERUN_MODULE_DIR/lib/functions.sh scm-setup || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+# Error handling
+# ---------------
+
+set -o errexit -o nounset -o pipefail
+
+rerun_options_parse "$@"
+
+read_errmsg() {
+	if ! xmlstarlet val -q $1
+	then
+		local errout=$(mktemp -t "errout.XXXXX")
+		xmlstarlet fo -R -H $1 2>/dev/null > $errout
+		local version=$(xmlstarlet sel -t -m "//span[@class='rundeck-version-identity']" -v @data-version-string $errout 2>/dev/null)
+		echo "Unexpected response from rundeck version: '$version'"
+		cp $1 /tmp/error.out
+	else
+		xmlstarlet sel -t -m "//message" -v . $1
+	fi
+}
+
+scm_get(){
+	local curl_out=$1
+	local api_url="${URL}/api/15/project/${PROJECT}/scm/${SCM_INTEGRATION}/config"
+
+	if ! local http_code=$(rundeck_curl -w "%{http_code}" -X GET $api_url -o $curl_out)
+	then
+			rerun_die 3 "curl request failed (exit code: $?)"
+	fi
+	case ${http_code:-} in
+	  	20*) : ;; # successful 
+	   	40*) rerun_die "Failed getting SCM config (http_code=$http_code). Reason: $(read_errmsg $CURL_OUT)" ;;
+		* ) rerun_die 3 "API error (http_code=$http_code): GET $api_url" ;;
+	esac    	
+
+	# Check if the result is an xml file.
+	# It might be valid xml containing api error information.
+	# Fail the command if the api returned an error.
+	xmlstarlet val -q $curl_out
+
+	#
+	# Store the results in the specified file otherwise write it to stdout.
+	#
+	if [ -n "$FILE" ]
+	then xmlstarlet fo $curl_out > $FILE
+	else xmlstarlet fo $curl_out
+	fi
+}
+
+scm_post(){
+	(( $# != 2 )) && {
+		rerun_die 2 "usage: scm_post config outfile"
+	}
+	local config=$1 curl_out=$2
+	[[ ! -f "${config:-}" ]] && rerun_die 2 "SCM config file not found: '$config'"
+
+	local api_url="${URL}/api/15/project/${PROJECT}/scm/${SCM_INTEGRATION}/plugin/git-${SCM_INTEGRATION}/setup"
+
+	if ! local http_code=$(rundeck_curl -w "%{http_code}" \
+			-H Content-Type:application/xml -H Accept:application/xml \
+			--data-binary @$config \
+			-X POST $api_url -o $curl_out)
+	then
+		rerun_die 3 "curl request failed (exit code: $?)"
+	fi
+
+	case ${http_code:-} in
+	   	20*) : ;; # successful 
+	   	40*) rerun_die "SCM setup failed. Reason: $(read_errmsg $curl_out)" ;;
+		* )  rerun_die 3 "API error (http_code=$http_code): GET $api_url" ;;
+	esac
+}
+
+
+rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+
+CURL_OUT=$(mktemp "/tmp/curl.out.XXXXX")
+trap 'rm $CURL_OUT' EXIT; # cleanup on exit
+
+case $ACTION in
+	get)  scm_get  $CURL_OUT;;
+	post) scm_post "$FILE" "$CURL_OUT";;	
+	*) rerun_die 2 "$ACTION is an unknown action. actions: [get, post]"
+esac
+
+
+# Done. Exit with last command exit status.
+exit $?
+

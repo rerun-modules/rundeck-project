@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:acls-delete: "delete an aclpolicy"
+#/ usage: rerun rundeck-project:acls-delete [ --aclpolicy <>]  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: ACLPOLICY PROJECT URL USERNAME PASSWORD
+
+
+. $RERUN_MODULE_DIR/lib/functions.sh acls-delete || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+set -o errexit -o nounset -o pipefail
+
+
+
+rerun_options_parse "$@"
+
+rundeck_login $URL $USERNAME $PASSWORD
+
+if ! http_code=$(rundeck_curl -w "%{http_code}" \
+	-X DELETE ${URL}/api/15/project/$PROJECT/acl/$ACLPOLICY 2>/dev/null)
+then
+	rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+case ${http_code:-} in
+   	204) : ;; # successful
+   	404) : ;; # aclpolicy did not exist.
+	* ) rerun_die 3 "API error ${http_code:-}: DELETE ${URL}/api/15/project/$PROJECT/acl/$ACLPOLICY" ;;
+esac    
+
+
+
+# Done. Exit with last command exit status.
+exit $?

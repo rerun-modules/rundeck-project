@@ -1,0 +1,14 @@
+<scmPluginConfig>
+  <config>
+    <entry key="url">https://someuser@github.com/@someuser@/@PROJECT@.git </entry>
+    <entry key="dir">@RDECK_BASE@/projects/@PROJECT@/scm</entry>
+    <entry key="committerEmail">${user.email}</entry>
+    <entry key="committerName">${user.fullName}</entry>
+    <entry key="strictHostKeyChecking">no</entry>
+    <entry key="sshPrivateKeyPath">keys/@PROJECT@/git-access-key</entry>
+    <entry key="format">xml</entry>
+    <entry key="branch">master</entry>
+    <entry key="gitPasswordPath"/>
+    <entry key="pathTemplate">${job.project}-${job.group}${job.name}-${job.id}.${config.format}</entry>
+  </config>
+</scmPluginConfig>

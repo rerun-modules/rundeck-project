@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:acls-get: "get aclpolicy files"
+#/ usage: rerun rundeck-project:acls-get  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER>  --password <$RUNDECK_PASSWORD> [ --aclpolicy <>] 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT URL USERNAME PASSWORD ACLPOLICY
+
+. $RERUN_MODULE_DIR/lib/functions.sh acls-get || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+
+set -o errexit -o nounset -o pipefail
+
+rerun_options_parse "$@"
+
+
+rundeck_login "$URL" "$USERNAME" "$PASSWORD"
+
+CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
+trap 'rm $CURL_OUT' EXIT; # cleanup on exit
+
+if ! http_code=$(rundeck_curl -w "%{http_code}" -H "Accept: application/xml" \
+	-X GET ${URL}/api/14/project/$PROJECT/acl/$ACLPOLICY -o $CURL_OUT)
+then
+	rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+case ${http_code:-} in
+   	200) : ;; # successful
+	* ) rerun_die 3 "API error: ${URL}/api/14/project/$PROJECT/acl/$ACLPOLICY"
+esac  
+
+if ! xmlstarlet sel -t -m '/' -v contents -n $CURL_OUT
+then
+	rerun_die "The ACL policy had no content: $ACLPOLICY"
+fi
+
+
+# Done. Exit with last command exit status.
+exit $?
+

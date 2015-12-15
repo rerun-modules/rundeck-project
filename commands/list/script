@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:list: "list existing projects"
-#/ usage: rerun rundeck-project:list  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
+#/ usage: rerun rundeck-project:list  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
 #/ option-variables: URL USERNAME PASSWORD APIKEY
 
@@ -31,7 +31,7 @@ fi
 
 case ${http_code:-} in
    	20*) : ;; # successful
-	* ) rerun_die 3 "API error: ${URL}/api/1/projects" ;;
+	* ) rerun_die 3 "API error ${http_code:-}: ${URL}/api/1/projects" ;;
 esac
 
 xmlstarlet val -q $CURL_OUT

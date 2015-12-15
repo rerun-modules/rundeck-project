@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:export: "export the project to an archive"
-#/ usage: rerun rundeck-project:export  --project <> [ --file <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
+#/ usage: rerun rundeck-project:export  --project <> [ --file <>]  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
 #/ option-variables: PROJECT FILE URL USERNAME PASSWORD APIKEY
 

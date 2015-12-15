@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:scm-setup: "setup an scmp plugin for the project"
-#/ usage: rerun rundeck-project:scm-setup  --project <> [ --file <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --scm-integration <>  --action <get> 
+#/ usage: rerun rundeck-project:scm-setup  --project <> [ --file <>]  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --scm-integration <>  --action <get> 
 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
 #/ option-variables: PROJECT FILE URL USERNAME PASSWORD APIKEY SCM_INTEGRATION ACTION

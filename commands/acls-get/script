@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:acls-get: "get aclpolicy file"
-#/ usage: rerun rundeck-project:acls-get [ --aclpolicy <>]  --project <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
+#/ usage: rerun rundeck-project:acls-get [ --aclpolicy <>]  --project <>  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
 #/ option-variables: ACLPOLICY PROJECT URL USERNAME PASSWORD APIKEY
 

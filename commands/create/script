@@ -2,7 +2,7 @@
 
 
 #/ command: rundeck-project:create: "create a new project"
-#/ usage: rerun rundeck-project:create  --project <>  --templates <> [ --description <>]  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
+#/ usage: rerun rundeck-project:create  --project <>  --templates <> [ --description <>]  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 
 # Load common functions
 # ---------------------

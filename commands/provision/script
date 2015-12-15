@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:provision: "provision a project"
-#/ usage: rerun rundeck-project:provision  --project <>  --templates <>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --rdeck-base <$RDECK_BASE>  --git-repo-url <> 
+#/ usage: rerun rundeck-project:provision  --project <>  --templates <>  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --rdeck-base <$RDECK_BASE>  --git-repo-url <> 
 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
 #/ option-variables: PROJECT TEMPLATES URL USERNAME PASSWORD APIKEY RDECK_BASE GIT_REPO_URL

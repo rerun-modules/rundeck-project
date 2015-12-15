@@ -47,9 +47,9 @@ rundeck_curl() {
 #
 
 #
-# _rundeck_login_ - Login to rundeck
+# _rundeck_login_ - Login to rundeck and get a session
 #
-#     rundeck_login url user password
+#     rundeck_login_session url user password
 #
 # Arguments:
 #
@@ -58,7 +58,7 @@ rundeck_curl() {
 # * password: The password for login.
 #
 # Notes: 
-rundeck_login(){
+rundeck_login_session(){
 	(( $# != 3 )) && {
 		rerun_die 2 "usage: rundeck_login: url user password"
 	}
@@ -109,6 +109,10 @@ rundeck_login(){
 	return 0
 }
 
+#
+# - - -
+#
+
 rundeck_authenticate() {
 	OPTIND=1
 	local url username password apikey cookies
@@ -121,13 +125,13 @@ rundeck_authenticate() {
 		esac
 	done
 
-	if [[ -n "${password:-}" && -z "${apikey:-}" ]]
+	if [[ -n "${password:-}" && -n "${username:-}" ]]
 	then
-		COOKIES=$(rundeck_login "$URL" "$username" "$password")
+		COOKIES=$(rundeck_login_session "$URL" "$username" "$password")
 		CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
 	elif [[ -z "${password:-}" && -n "${apikey:-}" ]]; then
 		CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$apikey"
 	else
-		rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
+		rerun_die 2 "Either use --username <> --password <> ...or... --apikey <>"
 	fi
 }

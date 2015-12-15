@@ -4,9 +4,9 @@
 NAME=username
 DESCRIPTION="the login user name."
 ARGUMENTS=true
-REQUIRED=true
+REQUIRED=false
 SHORT=
 LONG=user
 DEFAULT=$RUNDECK_USER
-EXPORT=false
+EXPORT=true
 

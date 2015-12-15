@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #/ command: rundeck-project:config: "Update project configuration"
-#/ usage: rerun rundeck-project:config  --project <> [ --file <>] [ --format <xml>]  --action <get>  --url <$RUNDECK_URL>  --username <$RUNDECK_USER> [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
+#/ usage: rerun rundeck-project:config  --project <> [ --file <>] [ --format <xml>]  --action <get>  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
 #/ option-variables: PROJECT FILE FORMAT ACTION URL USERNAME PASSWORD APIKEY
 

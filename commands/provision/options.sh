@@ -51,8 +51,8 @@ rerun_options_parse() {
     [ -z "$PROJECT" ] && { echo >&2 "missing required option: --project" ; return 2 ; }
     [ -z "$TEMPLATES" ] && { echo >&2 "missing required option: --templates" ; return 2 ; }
     [ -z "$URL" ] && { echo >&2 "missing required option: --url" ; return 2 ; }
-    [ -z "$RDECK_BASE" ] && { echo >&2 "missing required option: --rdeck-base" ; return 2 ; }
-    [ -z "$GIT_REPO_URL" ] && { echo >&2 "missing required option: --git-repo-url" ; return 2 ; }
+    #[ -z "$RDECK_BASE" ] && { echo >&2 "missing required option: --rdeck-base" ; return 2 ; }
+    #[ -z "$GIT_REPO_URL" ] && { echo >&2 "missing required option: --git-repo-url" ; return 2 ; }
     # If option variables are declared exportable, export them.
     export USERNAME
     export PASSWORD

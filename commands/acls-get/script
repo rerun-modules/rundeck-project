@@ -20,8 +20,8 @@ rerun_options_parse "$@"
 #
 if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
 then
-	COOKIES=$(rundeck_login "$URL" "$USERNAME" "$PASSWORD")
-	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES"
+	COOKIES=$(rundeck_login_session "$URL" "$USERNAME" "$PASSWORD")
+	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES -u ${USERNAME}:${PASSWORD}"
 elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
 	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
 else

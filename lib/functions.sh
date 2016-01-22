@@ -39,7 +39,7 @@ CURLOPTS="-k -s -S -L"
 #
 # Notes:
 rundeck_curl() {
-	command curl --user-agent "rerun/$RERUN_VERSION rundeck-project/${RERUN_MODULE_VERSION:-}" $CURLOPTS "$@"
+  command curl --user-agent "rerun/$RERUN_VERSION $(basename ${RERUN_MODULE_DIR})/${RERUN_MODULE_VERSION:-}" $CURLOPTS "$@"
 }
 
 #

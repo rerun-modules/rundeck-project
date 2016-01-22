@@ -4,7 +4,7 @@
 NAME=git-repo-url
 DESCRIPTION="the url to the project git repo"
 ARGUMENTS=true
-REQUIRED=true
+REQUIRED=false
 SHORT=
 LONG=git-repo-url
 DEFAULT=

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:provision: "provision a project"
-#/ usage: rerun rundeck-project:provision  --project <>  --templates <>  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --rdeck-base <$RDECK_BASE>  --git-repo-url <> 
+#/ usage: rerun rundeck-project:provision  --project <>  --templates <>  --rdeck-base <${RDECK_BASE:-}> [ --git-repo-url <>]  --url <${RUNDECK_URL:-}> [ --username <${RUNDECK_USER:-}>] [ --password <${RUNDECK_PASSWORD:-}>] [ --apikey <${RUNDECK_APIKEY:-}>] 
 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: PROJECT TEMPLATES URL USERNAME PASSWORD APIKEY RDECK_BASE GIT_REPO_URL
+#/ option-variables: PROJECT TEMPLATES RDECK_BASE GIT_REPO_URL URL USERNAME PASSWORD APIKEY
 
 
 # Load the function library for this module.
@@ -22,7 +22,7 @@ rerun_options_parse "$@"
 TMPFILES=()
 #trap 'rm ${TMPFILES[*]}' EXIT; # cleanup on exit
 
-OPTS=(--url $URL --username $USERNAME --project $PROJECT)
+OPTS=(--url $URL --project $PROJECT)
 
 
 #
@@ -59,9 +59,12 @@ do
 	[[ ! -f $TEMPLATES/scm/git-$integration.xml ]] && continue
 
 	SCM_CONFIG=$(mktemp -t "git-$integration.XXXXX"); TMPFILES=(${TMPFILES[*]:-} $SCM_CONFIG)
-	sed \
+
+	sed_exprs=()
+	[[ -n "${GIT_REPO_URL:-}" ]] && sed_exprs=(${sed_exprs[*]:-} -e "s,@GIT_REPO_URL@,$GIT_REPO_URL,g")
+
+	sed ${sed_exprs[*]} \
 		-e "s/@SCM_INTEGRATION@/$integration/g" \
-		-e "s,@GIT_REPO_URL@,$GIT_REPO_URL,g" \
 		-e "s/@PROJECT@/$PROJECT/g" \
 		-e "s,@RDECK_BASE@,$RDECK_BASE,g" \
 		$TEMPLATES/scm/git-$integration.xml > $SCM_CONFIG

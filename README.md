@@ -100,17 +100,17 @@ Provision a new project using the templates
 	Creating project: foo ...
 	[OK] Created.
 	Loading aclpolicy files ...
-	 - templates/example/acl/anyone-allow-resource.aclpolicy
-	 - templates/example/acl/anyone-node-allow.aclpolicy
-	 - templates/example/acl/anyone-resource-allow.aclpolicy
-	 - templates/example/acl/dev-jobs-allow-web_Restart.aclpolicy
-	 - templates/example/acl/dev-jobs-allow-web_Status.aclpolicy
-	 - templates/example/acl/dev-node-allow-www.aclpolicy
-	 - templates/example/acl/ops-jobs-allow-anvils.aclpolicy
-	 - templates/example/acl/ops-jobs-allow-db.aclpolicy
-	 - templates/example/acl/ops-jobs-deny-releng_Promote.aclpolicy
-	 - templates/example/acl/ops-node-allow-all.aclpolicy
-	 - templates/example/acl/releng-jobs-allow-release_Promote.aclpolicy
+	 - anyone-allow-resource.aclpolicy
+	 - anyone-node-allow.aclpolicy
+	 - anyone-resource-allow.aclpolicy
+	 - dev-jobs-allow-web_Restart.aclpolicy
+	 - dev-jobs-allow-web_Status.aclpolicy
+	 - dev-node-allow-www.aclpolicy
+	 - ops-jobs-allow-anvils.aclpolicy
+	 - ops-jobs-allow-db.aclpolicy
+	 - ops-jobs-deny-releng_Promote.aclpolicy
+	 - ops-node-allow-all.aclpolicy
+	 - releng-jobs-allow-release_Promote.aclpolicy
 	[OK] Loaded 11 aclpolicy files.
 	Configuring SCM plugins ...	
 	 - git-export

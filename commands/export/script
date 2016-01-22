@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 #/ command: rundeck-project:export: "export the project to an archive"
-#/ usage: rerun rundeck-project:export  --project <> [ --file <>]  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>] 
+#/ usage: rerun rundeck-project:export  --project <> [ --file <>] [ --execution-ids <>]  --url <${RUNDECK_URL:-}> [ --username <${RUNDECK_USER:-}>] [ --password <${RUNDECK_PASSWORD:-}>] [ --apikey <${RUNDECK_APIKEY:-}>] [ --execution-ids-file <>] 
 #/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
-#/ option-variables: PROJECT FILE URL USERNAME PASSWORD APIKEY
+#/ option-variables: PROJECT FILE EXECUTION_IDS URL USERNAME PASSWORD APIKEY EXECUTION_IDS_FILE
 
 . $RERUN_MODULE_DIR/lib/functions.sh export || { 
   echo >&2 "Failed loading function library." ; exit 1 ; 
@@ -28,17 +28,36 @@ rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}
 CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
 trap 'rm $CURL_OUT' EXIT; # cleanup on exit
 
+postParams=
+ids=
+if [[ -n "${EXECUTION_IDS:-}" ]]
+then
+	ids=(${ids[*]:-} ${EXECUTION_IDS})
+fi
+if [[ -f "${EXECUTION_IDS_FILE:-}" ]]
+then
+	fileIds=( $(cat $EXECUTION_IDS_FILE) )
+	ids=(${ids[*]:-} ${fileIds[*]:-})
+fi
+postParams=$(printf "executionIds=%s&" "${ids[@]:-}")
+
+rerun_log info "Exporting $PROJECT ..."
+
 if ! http_code=$(rundeck_curl -w "%{http_code}" \
-	-X GET ${URL}/api/14/project/$PROJECT/export -o $CURL_OUT)
+	-X POST ${URL}/api/14/project/$PROJECT/export \
+	--data "${postParams%*&}" \
+	-o $CURL_OUT)
 then
 	rerun_die 3 "curl request failed (exit code: $?)"
 fi
 
 case ${http_code:-} in
-   	20*) cp $CURL_OUT $FILE ;; # successful
+   	200) cp $CURL_OUT $FILE ;; # successful
    	404) rerun_die "Export failed. Reason: $(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
 	* ) rerun_die 3 "API error (http_code: ${http_code:-}): GET ${URL}/api/11/project/$PROJECT/export" ;;
 esac
+
+rerun_log info "[OK] archive: $FILE"
 
 # done
 exit $?

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:job-import: "import a job definition"
+#/ usage: rerun rundeck-project:job-import  --project <> [ --file <>]  --url <${RUNDECK_URL:-}> [ --user <${RUNDECK_USER:=}>] [ --password <${RUNDECK_PASSWORD:=}>] [ --apikey <${RUNDECK_APIKEY:-}>] [ --format <xml>] [ --dupe-option <create>] [ --uuid-option <preserve>] 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT FILE URL USERNAME PASSWORD APIKEY FORMAT DUPE_OPTION UUID_OPTION
+
+. $RERUN_MODULE_DIR/lib/functions.sh job-import || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+set -o errexit -o nounset -o pipefail
+
+rerun_options_parse "$@"
+
+# Command implementation
+# ----------------------
+
+rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}"
+
+
+CURL_OUT=$(mktemp -t curl.out.XXXXXXX)
+trap 'rm $CURL_OUT' EXIT; # cleanup on exit
+
+APIURL=${URL}/api/14/project/$PROJECT/jobs/import
+
+if ! http_code=$(rundeck_curl -w "%{http_code}" \
+	-H "Accept:application/xml" \
+	-H "Content-Type:application/$FORMAT" \
+	-X POST "${APIURL}?dupeOption=$DUPE_OPTION&uuidOption=$UUID_OPTION" \
+	--data-binary @"$FILE" \
+	-o "$CURL_OUT")
+then
+	rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+#cat $CURL_OUT
+case ${http_code:-} in
+	200) nsuccessful=$(xmlstarlet sel -t -m //succeeded -v @count $CURL_OUT)
+		(( $nsuccessful != 1 )) && {
+			rerun_die 3 "$(xmlstarlet sel -t -m //error -v . $CURL_OUT|tr '\n' '\t')"
+		}
+	;; 
+	* ) rerun_die 3 "API error ${http_code:-}: POST ${APIURL}" ;;
+esac
+
+# Done. Exit with last command exit status.
+exit $?
+

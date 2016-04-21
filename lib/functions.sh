@@ -148,3 +148,20 @@ rundeck_authenticate() {
 		rerun_die 2 "Either use --username <> --password <> ...or... --apikey <>"
 	fi
 }
+
+#
+# - - -
+#
+
+template_subst() {
+	local FILE=$1
+	sed_exprs=()
+	[[ -n "${PROJECT:-}" ]] && sed_exprs=(${sed_exprs[*]:-} -e "s/@PROJECT@/$PROJECT/g")
+	[[ -n "${GROUP:-}"  ]] && sed_exprs=(${sed_exprs[*]:-} -e "s/@GROUP@/$GROUP/g")
+	if [[ -n "${sed_exprs[*]}" ]]
+	then
+		sed ${sed_exprs[*]}	$FILE
+	else
+		cat $FILE
+	fi
+}

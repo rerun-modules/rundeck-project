@@ -26,7 +26,7 @@ rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}
 
 POST_CONTENT=$(mktemp -t post.content.XXXXXXXXXX)
 cat >$POST_CONTENT <<EOF
-<contents><![CDATA[$(< $FILE)]]></contents>
+<contents><![CDATA[$(template_subst $FILE)]]></contents>
 EOF
 ! xmlstarlet val -q $POST_CONTENT && rerun_die "Error encoding aclpolicy content"
 CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)

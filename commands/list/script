@@ -21,7 +21,7 @@ rerun_options_parse "$@"
 #
 rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}"
 
-CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
+CURL_OUT=$(mktemp -t curl.out.project:list.XXXXXXX)
 trap 'rm $CURL_OUT' EXIT; # cleanup on exit
 
 if ! http_code=$(rundeck_curl -w "%{http_code}" -X GET ${URL}/api/1/projects -o $CURL_OUT)
@@ -29,9 +29,10 @@ then
 	rerun_die 3 "curl request failed (exit code: $?)"
 fi
 
+
 case ${http_code:-} in
    	20*) : ;; # successful
-	* ) rerun_die 3 "API error ${http_code:-}: ${URL}/api/1/projects" ;;
+	* ) rerun_die 3 "API error ${http_code:-}: ${URL}/api/1/projects. Reason: $(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
 esac
 
 xmlstarlet val -q $CURL_OUT

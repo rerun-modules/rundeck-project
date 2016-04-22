@@ -14,38 +14,14 @@ set -o errexit -o nounset -o pipefail
 
 rerun_options_parse "$@"
 
+opts=()
+[[ -n "${URL:-}" ]] && opts=(${opts[*]:-} --url $URL)
+[[ -n "${USERNAME:-}" ]] && opts=(${opts[*]:-} --username $USERNAME)
+[[ -n "${PASSWORD:-}" ]] && opts=(${opts[*]:-} --password $PASSWORD)
+[[ -n "${APIKEY:-}" ]] && opts=(${opts[*]:-} --apikey $APIKEY)
 
-#
-# Read authentication credentials
-#
-if [[ -n "${PASSWORD:-}" && -z "${APIKEY:-}" ]]
-then
-	COOKIES=$(rundeck_login_session "$URL" "$USERNAME" "$PASSWORD")
-	CURLOPTS="$CURLOPTS -c $COOKIES -b $COOKIES -u ${USERNAME}:${PASSWORD}"
-elif [[ -z "${PASSWORD:-}" && -n "${APIKEY:-}" ]]; then
-	CURLOPTS="$CURLOPTS -H X-Rundeck-Auth-Token:$APIKEY"
-else
-	rerun_die 2 "Either use --username <> --password <> ...or.. --apikey <>"
-fi
+rerun rundeck-acls:get ${opts[*]:-} --project $PROJECT --aclpolicy $ACLPOLICY
 
-CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
-trap 'rm $CURL_OUT' EXIT; # cleanup on exit
-
-if ! http_code=$(rundeck_curl -w "%{http_code}" -H "Accept: application/xml" \
-	-X GET ${URL}/api/14/project/$PROJECT/acl/$ACLPOLICY -o $CURL_OUT)
-then
-	rerun_die 3 "curl request failed (exit code: $?)"
-fi
-
-case ${http_code:-} in
-   	200) : ;; # successful
-	* ) rerun_die 3 "API error: ${URL}/api/14/project/$PROJECT/acl/$ACLPOLICY"
-esac  
-
-if ! xmlstarlet sel -t -m '/' -v contents -n $CURL_OUT
-then
-	rerun_die "The ACL policy had no content: $ACLPOLICY"
-fi
 
 
 # Done. Exit with last command exit status.

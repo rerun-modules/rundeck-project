@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:import: "Import a zip archive to the project"
+#/ usage: rerun rundeck-project:import  --project <> [ --file <>] [ --import-executions <true>] [ --import-config <true>] [ --import-acl <true>]  --url <${RUNDECK_URL:-}> [ --username <${RUNDECK_USER:-}>] [ --password <${RUNDECK_PASSWORD:-}>] [ --apikey <${RUNDECK_APIKEY:-}>] [ --preserve-jobuuid <true>] 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: PROJECT FILE IMPORT_EXECUTIONS IMPORT_CONFIG IMPORT_ACL URL USERNAME PASSWORD APIKEY PRESERVE_JOBUUID
+
+. $RERUN_MODULE_DIR/lib/functions.sh import || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+set -o errexit -o nounset -o pipefail
+
+rerun_options_parse "$@"
+
+[[ ! -n "${FILE:-}" ]] && rerun_die 2 "mising required option --file"
+[[ ! -f "$FILE" ]]     && rerun_die 2 "file not found: '$FILE'"
+#
+# Read authentication credentials
+#
+rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}"
+
+
+CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
+trap 'rm $CURL_OUT' EXIT; # cleanup on exit
+
+[[ "${PRESERVE_JOBUUID}" == true ]] && jobUuidOption="preserve" || jobUuidOption="remove"
+qparams=jobUuidOption=${jobUuidOption}
+qparams="${qparams}&importExecutions=${IMPORT_EXECUTIONS}"
+qparams="${qparams}&importConfig=${IMPORT_CONFIG}"
+qparams="${qparams}&importACL=${IMPORT_ACL}"
+
+
+APIURL=${URL}/api/14/project/$PROJECT/import
+if ! http_code=$(rundeck_curl -w "%{http_code}" \
+	-H 'Content-Type:application/zip' --data-binary @"$FILE" \
+    -H 'Accept:application/xml' \
+	-X PUT ${APIURL}?${qparams:-} \
+	-o $CURL_OUT)
+then
+	rerun_die 3 "curl request failed (exit code: $?)"
+fi
+
+#xmlstarlet fo $CURL_OUT >&2; # debug
+
+case ${http_code:-} in
+   	20*) : ;; # successful
+   	40*) echo >&2 "Import errors: $(xmlstarlet sel -t -m //error -v . -n $CURL_OUT)"
+		rerun_die 1 "Import failed."
+	;;
+	* ) rerun_die 3 "API error (http_code: ${http_code:-}): PUT ${APIURL}" ;;
+esac
+
+
+status=$(xmlstarlet sel -t -m /import -v @status $CURL_OUT)
+total_errors=0
+if [[ "${status}" == failed ]]
+then
+	# Job errors
+	if ! count=$(xmlstarlet sel -t -m /import/errors -v @count $CURL_OUT)
+	then
+		: ; # no errors
+	else
+		rerun_log warn "Import contained $count job errors:"
+		(( total_errors+=count ))
+		xmlstarlet sel -t -m /import/errors -o " - " -v error -n $CURL_OUT		
+	fi
+
+	# Execution errors
+	if ! count=$(xmlstarlet sel -t -m /import/executionErrors -v @count $CURL_OUT)
+	then
+		: ; # no errors
+	else
+		rerun_log warn "Import contained $count execution errors:"
+		(( total_errors+=count ))
+		xmlstarlet sel -t -m /import/executionErrors -o " - " -v error -n $CURL_OUT		
+	fi
+
+	# ACL errors
+	if ! count=$(xmlstarlet sel -t -m /import/aclErrors -v @count $CURL_OUT)
+	then
+		: ; # no errors
+	else
+		rerun_log warn "Import contained $count ACL errors:"		
+		(( total_errors+=count ))
+		xmlstarlet sel -t -m /errors/aclErrors -o " - " -v error -n $CURL_OUT		
+	fi
+
+	rerun_die "Import failed due to $total_errors errors in project archive."	
+fi
+
+# done
+exit $?

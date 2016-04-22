@@ -16,25 +16,13 @@ set -o errexit -o nounset -o pipefail
 
 rerun_options_parse "$@"
 
-#
-# Read authentication credentials
-#
-rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}"
+opts=()
+[[ -n "${URL:-}" ]] && opts=(${opts[*]:-} --url $URL)
+[[ -n "${USERNAME:-}" ]] && opts=(${opts[*]:-} --username $USERNAME)
+[[ -n "${PASSWORD:-}" ]] && opts=(${opts[*]:-} --password $PASSWORD)
+[[ -n "${APIKEY:-}" ]] && opts=(${opts[*]:-} --apikey $APIKEY)
 
-
-if ! http_code=$(rundeck_curl -w "%{http_code}" \
-	-X DELETE ${URL}/api/15/project/$PROJECT/acl/$ACLPOLICY 2>/dev/null)
-then
-	rerun_die 3 "curl request failed (exit code: $?)"
-fi
-
-case ${http_code:-} in
-   	204) : ;; # successful
-   	404) : ;; # aclpolicy did not exist.
-	* ) rerun_die 3 "API error ${http_code:-}: DELETE ${URL}/api/15/project/$PROJECT/acl/$ACLPOLICY" ;;
-esac    
-
-
+rerun rundeck-acls:delete ${opts[*]:-} --project $PROJECT --aclpolicy $ACLPOLICY
 
 # Done. Exit with last command exit status.
 exit $?

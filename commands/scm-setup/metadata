@@ -3,4 +3,4 @@
 # Thu Dec 10 14:54:28 PST 2015
 NAME=scm-setup
 DESCRIPTION="setup an scmp plugin for the project"
-OPTIONS="project file url username password apikey scm-integration action"
+OPTIONS="project file scm-integration action url username password apikey"

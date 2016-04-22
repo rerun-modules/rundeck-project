@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+
+#/ command: rundeck-project:motd: "manage the motd"
+#/ usage: rerun rundeck-project:motd [ --file <>]  --action <get>  --url <$RUNDECK_URL> [ --username <$RUNDECK_USER>] [ --password <$RUNDECK_PASSWORD>] [ --apikey <$RUNDECK_APIKEY>]  --project <> 
+#/ rerun-variables: RERUN, RERUN_VERSION, RERUN_MODULES, RERUN_MODULE_DIR
+#/ option-variables: FILE ACTION URL USERNAME PASSWORD APIKEY PROJECT
+
+# Load common functions
+# ---------------------
+
+# Load the function library for this module.
+# This loads rerun functions, too.
+. $RERUN_MODULE_DIR/lib/functions.sh motd || { 
+  echo >&2 "Failed loading function library." ; exit 1 ; 
+}
+
+
+set -o errexit -o nounset -o pipefail
+
+
+rerun_options_parse "$@"
+
+
+put() {
+	local FILE=$1
+
+	local POST_CONTENT=$(mktemp -t post.content.XXXXXXX)
+	TMPFILES=(${TMPFILES[*]} $POST_CONTENT)
+
+	if [[ -z "${FILE:-}" ]]
+	then
+		rerun_log info "Reading from stdin"
+		cat >$POST_CONTENT <<-EOF
+		<contents><![CDATA[$(cat)]]></contents>
+		EOF
+	else
+		[[ ! -f "$FILE" ]] && rerun_die 2 "File not found: $FILE"
+		cat >$POST_CONTENT <<-EOF
+		<contents><![CDATA[$(< "$FILE")]]></contents>
+		EOF
+	fi
+
+	! xmlstarlet val -q "$POST_CONTENT" && rerun_die "Error encoding motd content"
+
+	if ! http_code=$(rundeck_curl -w "%{http_code}" --data-binary @$POST_CONTENT \
+		-H Content-Type:application/xml -H Accept:application/xml \
+		-X PUT ${URL}/api/13/project/${PROJECT}/motd.md -o $CURL_OUT)
+	then
+			rerun_die 3 "curl request failed (exit code: $?)"
+	fi
+
+	case ${http_code:-} in
+	   	20*) : ;; # successful 
+	   	40*) rerun_die "$(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
+		* )  rerun_die 3 "API error ${http_code:-}: POST ${URL}/api/13/project/${PROJECT}/motd.md" ;;
+	esac 
+}
+
+get() {
+	local FILE=$1
+
+	if ! http_code=$(rundeck_curl -w "%{http_code}" \
+		-H Content-Type:application/xml -H Accept:application/xml \
+		-X GET ${URL}/api/13/project/${PROJECT}/motd.md -o $CURL_OUT)
+	then
+			rerun_die 3 "curl request failed (exit code: $?)"
+	fi
+
+	case ${http_code:-} in
+	   	20*) : ;; # successful 
+	   	40*) rerun_die "$(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
+		* )  rerun_die 3 "API error ${http_code:-}: GET ${URL}/api/13/project/${PROJECT}/motd.md" ;;
+	esac 
+	if [[ -n "${FILE:-}" ]]
+	then
+		xmlstarlet sel -t -m "/" -v contents -n $CURL_OUT > $FILE
+	else
+		xmlstarlet sel -t -m "/" -v contents -n $CURL_OUT
+	fi
+	
+}
+
+delete() {
+
+	if ! http_code=$(rundeck_curl -w "%{http_code}" \
+		-H Content-Type:application/xml -H Accept:application/xml \
+		-X DELETE ${URL}/api/13/project/${PROJECT}/motd.md -o $CURL_OUT)
+	then
+			rerun_die 3 "curl request failed (exit code: $?)"
+	fi
+
+	case ${http_code:-} in
+	   	20*) : ;; # successful 
+	   	40*) rerun_die "$(xmlstarlet sel -t -m //error -v message $CURL_OUT)" ;;
+		* )  rerun_die 3 "API error ${http_code:-}: DELETE ${URL}/api/13/project/${PROJECT}/motd.md" ;;
+	esac 
+}
+
+
+
+
+CURL_OUT=$(mktemp -t curl.out.XXXXXXX)
+TMPFILES=($CURL_OUT)
+trap 'rm ${TMPFILES[*]}' EXIT; # cleanup on exit
+
+rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}"
+
+
+case $ACTION in
+	delete) delete ;;
+	get) get "${FILE:-}" ;;
+	put) put "${FILE:-}" ;;
+	*) rerun_die 2 "$ACTION is an unknown action. actions: [get, put, delete]"
+esac
+
+
+# Done. Exit with last command exit status.
+exit $?
+

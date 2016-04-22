@@ -15,32 +15,13 @@ set -o errexit -o nounset -o pipefail
 
 rerun_options_parse "$@"
 
+opts=()
+[[ -n "${URL:-}" ]] && opts=(${opts[*]:-} --url $URL)
+[[ -n "${USERNAME:-}" ]] && opts=(${opts[*]:-} --username $USERNAME)
+[[ -n "${PASSWORD:-}" ]] && opts=(${opts[*]:-} --password $PASSWORD)
+[[ -n "${APIKEY:-}" ]] && opts=(${opts[*]:-} --apikey $APIKEY)
 
-#
-# Read authentication credentials
-#
-rundeck_authenticate -u "$URL" -U "$USERNAME" -p "${PASSWORD:-}" -k "${APIKEY:-}"
-
-
-CURL_OUT=$(mktemp -t curl.out.XXXXXXXXXX)
-trap 'rm $CURL_OUT' EXIT; # cleanup on exit
-
-if ! http_code=$(rundeck_curl -w "%{http_code}" -H "Accept: application/xml" \
-	-X GET ${URL}/api/14/project/$PROJECT/acl/ -o $CURL_OUT)
-then
-	rerun_die 3 "curl request failed (exit code: $?)"
-fi	
-
-case ${http_code:-} in
-   	200) : ;; # successful
-	* ) rerun_die 3 "API error: ${URL}/api/14/project/$PROJECT/acl/"
-esac  
-
-if ! xmlstarlet sel -t -m '/resource/contents/resource' -v @path -n $CURL_OUT
-then
-	rerun_log debug "No ACL policies exist for project: $PROJECT"
-fi
-
+rerun rundeck-acls:list ${opts[*]:-} --project $PROJECT
 
 # Done. Exit with last command exit status.
 exit $?

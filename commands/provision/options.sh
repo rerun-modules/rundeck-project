@@ -31,6 +31,7 @@ rerun_options_parse() {
             --username) rerun_option_check $# $1; USERNAME=$2 ; shift ;;
             --password) rerun_option_check $# $1; PASSWORD=$2 ; shift ;;
             --apikey) rerun_option_check $# $1; APIKEY=$2 ; shift ;;
+            --group) rerun_option_check $# $1; GROUP=$2 ; shift ;;
             # help option
             -|--*?) echo >&2 "unrecognized option: $OPT"
                 rerun_option_usage

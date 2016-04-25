@@ -20,6 +20,7 @@ opts=()
 [[ -n "${USERNAME:-}" ]] && opts=(${opts[*]:-} --username $USERNAME)
 [[ -n "${PASSWORD:-}" ]] && opts=(${opts[*]:-} --password $PASSWORD)
 [[ -n "${APIKEY:-}" ]] && opts=(${opts[*]:-} --apikey $APIKEY)
+[[ -n "${GROUP:-}" ]] && opts=(${opts[*]:-} --group $GROUP)
 
 rerun rundeck-acls:update ${opts[*]:-} --project $PROJECT --aclpolicy $ACLPOLICY --file $FILE
 
